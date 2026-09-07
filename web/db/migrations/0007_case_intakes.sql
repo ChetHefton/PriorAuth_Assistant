@@ -1,0 +1,2 @@
+CREATE TABLE IF NOT EXISTS case_intakes (id TEXT PRIMARY KEY NOT NULL, created_by_user_id TEXT REFERENCES users(id) ON DELETE SET NULL, status TEXT NOT NULL, fields_json TEXT NOT NULL, created_at INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS case_intake_documents (id TEXT PRIMARY KEY NOT NULL, intake_id TEXT NOT NULL REFERENCES case_intakes(id) ON DELETE CASCADE, original_filename TEXT NOT NULL, stored_filename TEXT NOT NULL, mime_type TEXT NOT NULL, file_size INTEGER NOT NULL, created_at INTEGER NOT NULL);

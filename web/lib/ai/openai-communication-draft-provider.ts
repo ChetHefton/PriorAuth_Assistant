@@ -1,0 +1,8 @@
+import 'server-only';
+import OpenAI from 'openai';
+import { zodTextFormat } from 'openai/helpers/zod';
+import { communicationDraftSchema } from '@/lib/ai/communication-draft-schema';
+import type { CommunicationDraftProvider } from '@/lib/ai/communication-draft-provider';
+import type { CommunicationType, SubmissionPacket } from '@/types/communications';
+const INSTRUCTIONS='Draft a professional insurer communication using only the verified structured packet. Never invent missing values, diagnoses, HCPCS codes, dates, rules, coverage or medical-necessity conclusions. State unresolved items clearly. This is a draft only; human review is required before use.';
+export class OpenAICommunicationDraftProvider implements CommunicationDraftProvider { readonly modelName:string; private client:OpenAI; constructor(){const key=process.env.OPENAI_API_KEY?.trim();if(!key) throw new Error('OPENAI_API_KEY is not configured.');this.modelName=process.env.OPENAI_COMMUNICATION_MODEL?.trim()||process.env.OPENAI_DOCUMENT_MODEL?.trim()||'gpt-5.4-mini';this.client=new OpenAI({apiKey:key});} async generate(input:{type:CommunicationType;packet:SubmissionPacket;purpose:string}){const r=await this.client.responses.parse({model:this.modelName,store:false,input:[{role:'system',content:INSTRUCTIONS},{role:'user',content:`Type: ${input.type}\nPurpose: ${input.purpose}\nVerified packet JSON:\n${JSON.stringify(input.packet)}`}],text:{format:zodTextFormat(communicationDraftSchema,'prior_authorization_communication_draft')}}); if(!r.output_parsed) throw new Error('The model did not return a communication draft.'); return {subject:r.output_parsed.subject??undefined,body:r.output_parsed.body,notes:r.output_parsed.notes};}}

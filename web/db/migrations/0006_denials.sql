@@ -1,0 +1,2 @@
+CREATE TABLE IF NOT EXISTS denial_records (id TEXT PRIMARY KEY NOT NULL, case_id TEXT NOT NULL REFERENCES prior_authorization_cases(id) ON DELETE CASCADE, denial_document_id TEXT REFERENCES case_documents(id) ON DELETE SET NULL, payer TEXT NOT NULL, denial_date TEXT, external_reference_number TEXT, denial_reason_code TEXT, denial_reason_text TEXT, appeal_deadline TEXT, appeal_instructions TEXT, status TEXT NOT NULL DEFAULT 'OPEN', created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL);
+CREATE INDEX IF NOT EXISTS idx_denial_records_case ON denial_records(case_id);

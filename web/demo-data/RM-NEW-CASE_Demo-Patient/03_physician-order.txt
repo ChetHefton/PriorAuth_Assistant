@@ -1,0 +1,4 @@
+SYNTHETIC DEMO DOCUMENT — NOT A REAL CLINICAL ORDER
+Ordering provider: Dr. Taylor Morgan
+Order date: 09/02/2026
+Requested equipment: Custom power mobility device.

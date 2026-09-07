@@ -1,0 +1,6 @@
+import { NextResponse } from 'next/server';
+import { requirePermission } from '@/lib/auth/current-user';
+import { getCaseDetail } from '@/db/repositories/cases';
+import { recordAuditEvent } from '@/db/repositories/audit-events';
+import { buildExportPacket, renderDocx, renderPdf } from '@/lib/exports/prior-auth-export';
+export async function GET(req:Request,{params}:{params:Promise<{caseId:string}>}){const user=await requirePermission('cases.write');const {caseId}=await params;const detail=getCaseDetail(caseId);if(!detail)return NextResponse.json({error:'Case not found'},{status:404});const format=new URL(req.url).searchParams.get('format');if(format!=='pdf'&&format!=='docx')return NextResponse.json({error:'Unsupported export format.'},{status:400});const packet=buildExportPacket(detail);recordAuditEvent({userId:user.id,action:`prior_auth.export_${format}_generated`,resourceType:'case',resourceId:caseId});const data=format==='pdf'?renderPdf(packet):renderDocx(packet);return new NextResponse(new Uint8Array(data),{headers:{'Content-Type':format==='pdf'?'application/pdf':'application/vnd.openxmlformats-officedocument.wordprocessingml.document','Content-Disposition':`attachment; filename="${caseId}-prior-authorization.${format}"`,'Cache-Control':'no-store'}});}

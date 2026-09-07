@@ -1,0 +1,3 @@
+SYNTHETIC DEMO DOCUMENT — NOT A REAL CLINICAL ORDER
+Ordering provider: Dr. Priya Shah
+The provider orders a home infusion pump and related supplies.

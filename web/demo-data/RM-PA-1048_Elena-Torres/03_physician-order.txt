@@ -1,0 +1,4 @@
+SYNTHETIC DEMO DOCUMENT — NOT A REAL CLINICAL ORDER
+Ordering provider: Dr. Samir Patel
+Order date: 09/01/2026
+Requested equipment: Home oxygen equipment.

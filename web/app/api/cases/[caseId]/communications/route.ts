@@ -1,0 +1,12 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { requirePermission } from '@/lib/auth/current-user';
+import { requestUserHasPermission } from '@/lib/auth/request-authorization';
+import { getCaseDetail } from '@/db/repositories/cases';
+import { listCommunications } from '@/db/repositories/communications';
+import { OpenAICommunicationDraftProvider } from '@/lib/ai/openai-communication-draft-provider';
+import { generateCommunication } from '@/lib/communications/communication-service';
+import { getDatabase } from '@/db/client';
+const inputSchema=z.object({type:z.enum(['AUTHORIZATION_REQUEST','INITIAL_SUBMISSION_EMAIL','FOLLOW_UP_EMAIL','FAX_COVER','PHONE_SCRIPT','ADDITIONAL_INFO_RESPONSE']),channel:z.enum(['EMAIL','FAX','PHONE']),purpose:z.string().trim().min(1).max(240)});
+export async function GET(_:Request,{params}:{params:Promise<{caseId:string}>}){await requirePermission('cases.read');const {caseId}=await params;return NextResponse.json({communications:listCommunications(caseId)});}
+export async function POST(request:NextRequest,{params}:{params:Promise<{caseId:string}>}){const user=requestUserHasPermission(request,'communications.generate');if(!user)return NextResponse.json({error:'You do not have permission to generate communications.'},{status:403});const {caseId}=await params;const detail=getCaseDetail(caseId);if(!detail)return NextResponse.json({error:'Case not found'},{status:404});let body:unknown;try{body=await request.json();}catch{return NextResponse.json({error:'Invalid JSON request.'},{status:400});}const parsed=inputSchema.safeParse(body);if(!parsed.success)return NextResponse.json({error:'Invalid request'},{status:400});try{const communication=await generateCommunication({...parsed.data,caseDetail:detail,userId:user.id,provider:new OpenAICommunicationDraftProvider()},getDatabase());const rendered=listCommunications(caseId).find((item)=>item.id===communication.id);return NextResponse.json({communication:rendered},{status:201});}catch(error){const diagnostic=error instanceof Error?`${error.name}: ${error.message}`:'Unknown communication generation failure';console.error('[communications] generation failed',diagnostic);const message=error instanceof Error&&error.message.includes('OPENAI_API_KEY')?'Communication generation is not configured on the server.':'Communication generation failed. Please try again.';return NextResponse.json({error:message},{status:502});}}

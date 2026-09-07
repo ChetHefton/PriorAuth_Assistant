@@ -1,0 +1,8 @@
+import 'server-only';
+import OpenAI from 'openai';
+import { zodTextFormat } from 'openai/helpers/zod';
+import { appealDraftSchema, type AppealDraft } from '@/lib/ai/appeal-draft-schema';
+import type { CaseDetail } from '@/types/case';
+import type { DenialRecord } from '@/types/denial';
+import { compareDenialEvidence } from '@/lib/denials/compare-denial-evidence';
+export class OpenAIAppealDraftProvider { readonly modelName:string; private client:OpenAI; constructor(){const key=process.env.OPENAI_API_KEY?.trim();if(!key)throw new Error('OPENAI_API_KEY is not configured.');this.modelName=process.env.OPENAI_COMMUNICATION_MODEL?.trim()||process.env.OPENAI_DOCUMENT_MODEL?.trim()||'gpt-5.4-mini';this.client=new OpenAI({apiKey:key});} async generate(denial:DenialRecord,detail:CaseDetail):Promise<AppealDraft>{const comparison=compareDenialEvidence(denial,detail);const verified=detail.priorAuthDraft?.fields.filter(f=>f.status==='VERIFIED').map(f=>({field:f.fieldKey,value:f.displayValue,sources:f.sources.map(s=>({document:s.documentFilename,quote:s.sourceQuote}))}))??[];const r=await this.client.responses.parse({model:this.modelName,store:false,input:[{role:'system',content:'Draft a professional appeal using only the supplied denial, verified facts, grounded evidence, and deterministic comparison. Never invent clinical facts, dates, codes, policy rules, coverage, or medical necessity. Do not claim success. If evidence is missing, state that specialist review is required.'},{role:'user',content:JSON.stringify({denial,verified,comparison})}],text:{format:zodTextFormat(appealDraftSchema,'prior_authorization_appeal_draft')}});if(!r.output_parsed)throw new Error('The model did not return an appeal draft.');return r.output_parsed;}}

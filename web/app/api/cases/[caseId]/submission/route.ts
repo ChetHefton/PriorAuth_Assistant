@@ -1,0 +1,9 @@
+import { NextResponse } from 'next/server';
+import { z } from 'zod';
+import { requirePermission } from '@/lib/auth/current-user';
+import { getCaseDetail } from '@/db/repositories/cases';
+import { getSubmissionDetails, updateSubmissionDetails } from '@/db/repositories/communications';
+import { recordAuditEvent } from '@/db/repositories/audit-events';
+const schema=z.object({status:z.string().optional(),submissionChannel:z.string().nullable().optional(),externalReferenceNumber:z.string().max(120).nullable().optional(),submittedAt:z.iso.datetime().nullable().optional(),lastFollowUpAt:z.iso.datetime().nullable().optional(),nextFollowUpAt:z.iso.datetime().nullable().optional()});
+export async function GET(_:Request,{params}:{params:Promise<{caseId:string}>}){await requirePermission('cases.read');const {caseId}=await params;const d=getCaseDetail(caseId);return d?NextResponse.json({submission:d.submission,packet:d.submissionPacket}):NextResponse.json({error:'Case not found'},{status:404});}
+export async function PATCH(req:Request,{params}:{params:Promise<{caseId:string}>}){const user=await requirePermission('cases.write');const {caseId}=await params;const p=schema.safeParse(await req.json());if(!p.success)return NextResponse.json({error:'Invalid request'},{status:400});const date=(v:string|null|undefined)=>v===undefined?undefined:v===null?null:new Date(v);const row=updateSubmissionDetails(caseId,{status:p.data.status as never,submissionChannel:p.data.submissionChannel,externalReferenceNumber:p.data.externalReferenceNumber,submittedAt:date(p.data.submittedAt),lastFollowUpAt:date(p.data.lastFollowUpAt),nextFollowUpAt:date(p.data.nextFollowUpAt),submittedByUserId:p.data.submittedAt?user.id:undefined});if(!row)return NextResponse.json({error:'Case not found'},{status:404});recordAuditEvent({userId:user.id,action:'case.submission_details_updated',resourceType:'case',resourceId:caseId});return NextResponse.json(getSubmissionDetails(caseId));}

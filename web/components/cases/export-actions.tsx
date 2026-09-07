@@ -1,0 +1,4 @@
+'use client';
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+export function ExportActions({caseId,ready}:{caseId:string;ready:boolean}){const [busy,setBusy]=useState<string|null>(null);return <div className="flex flex-wrap items-center gap-2"><span className={ready?'text-xs font-semibold text-emerald-700':'text-xs font-semibold text-amber-700'}>{ready?'Ready for specialist submission review':'Draft / not ready - unresolved requirements'}</span><Button size="sm" variant="outline" disabled={!!busy} onClick={()=>{setBusy('pdf');window.location.href=`/api/cases/${caseId}/export?format=pdf`;setTimeout(()=>setBusy(null),800)}}>{busy==='pdf'?'Preparing…':'Download PDF'}</Button><Button size="sm" variant="outline" disabled={!!busy} onClick={()=>{setBusy('docx');window.location.href=`/api/cases/${caseId}/export?format=docx`;setTimeout(()=>setBusy(null),800)}}>{busy==='docx'?'Preparing…':'Download DOCX'}</Button></div>}

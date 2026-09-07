@@ -1,0 +1,5 @@
+SYNTHETIC DEMO DOCUMENT — NOT A REAL COVERAGE DECISION
+SummitCare Advantage demonstration denial dated 08/18/2026.
+Reference: SYN-REF-1042.
+Reason: Documentation does not include sufficient justification for the requested accessory.
+Reconsideration deadline: 09/24/2026.

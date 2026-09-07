@@ -1,0 +1,4 @@
+SYNTHETIC DEMO DOCUMENT — NOT A REAL CLINICAL ORDER
+Ordering provider: Dr. Jordan Avery
+Order date: 08/28/2026
+The provider orders a power wheelchair with elevating leg rests for Marcus Lee.
